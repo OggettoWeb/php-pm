@@ -40,6 +40,7 @@ class ProcessSlave
         $this->bridgeName = $bridgeName;
         $this->bootstrap($appBootstrap, $appenv);
         $this->connectToMaster();
+        $this->setTimer();
         $this->loop->run();
     }
 
@@ -125,5 +126,14 @@ class ProcessSlave
             $this->connection->close();
         }
         $this->loop->stop();
+    }
+
+    private function setTimer()
+    {
+        $this->loop->addPeriodicTimer(1, function() {
+            if ($this->getBridge() instanceof Bridges\TimerBridgeInterface) {
+                $this->getBridge()->timer($this);
+            }
+        });
     }
 }
