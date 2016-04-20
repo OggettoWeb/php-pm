@@ -31,13 +31,19 @@ class ProcessSlave
     protected $bridge;
 
     /**
+     * @var string
+     */
+    protected $slaveHost;
+
+    /**
      * @var string|null
      */
     protected $appenv;
 
-    public function __construct($bridgeName = null, $appBootstrap, $appenv)
+    public function __construct($bridgeName = null, $appBootstrap, $appenv, $host)
     {
         $this->bridgeName = $bridgeName;
+        $this->slaveHost = $host;
         $this->bootstrap($appBootstrap, $appenv);
         $this->connectToMaster();
         $this->setTimer();
@@ -99,7 +105,7 @@ class ProcessSlave
         $port = 5501;
         while ($port < 5600) {
             try {
-                $socket->listen($port);
+                $socket->listen($port, $this->slaveHost);
                 break;
             } catch( \React\Socket\ConnectionException $e ) {
                 $port++;

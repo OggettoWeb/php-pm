@@ -20,11 +20,12 @@ class StartCommand extends Command
 
         $config = [];
         if (file_exists($file = './ppm.json') || file_exists($file = dirname(realpath($GLOBALS['argv'][0])) . DIRECTORY_SEPARATOR . 'ppm.json')) {
-             $config = json_decode(file_get_contents($file), true);
+            $config = json_decode(file_get_contents($file), true);
         }
 
         $bridge        = $this->defaultOrConfig($config, 'bridge', 'HttpKernel');
         $host          = $this->defaultOrConfig($config, 'host', '127.0.0.1');
+        $slaveHost     = $this->defaultOrConfig($config, 'slave-host', '127.0.0.1');
         $port          = (int) $this->defaultOrConfig($config, 'port', 8080);
         $workers       = (int) $this->defaultOrConfig($config, 'workers', 8);
         $appenv        = $this->defaultOrConfig($config, 'app-env', 'dev');
@@ -35,6 +36,7 @@ class StartCommand extends Command
             ->addArgument('working-directory', InputArgument::OPTIONAL, 'The root of your appplication.', './')
             ->addOption('bridge', null, InputOption::VALUE_OPTIONAL, 'The bridge we use to convert a ReactPHP-Request to your target framework.', $bridge)
             ->addOption('host', null, InputOption::VALUE_OPTIONAL, 'Load-Balancer host. Default is 127.0.0.1', $host)
+            ->addOption('slave-host', null, InputOption::VALUE_OPTIONAL, 'Slave processes host. Default is 127.0.0.1', $slaveHost)
             ->addOption('port', null, InputOption::VALUE_OPTIONAL, 'Load-Balancer port. Default is 8080', $port)
             ->addOption('workers', null, InputOption::VALUE_OPTIONAL, 'Worker count. Default is 8. Should be minimum equal to the number of CPU cores.', $workers)
             ->addOption('app-env', null, InputOption::VALUE_OPTIONAL, 'The environment that your application will use to bootstrap (if any)', $appenv)
@@ -51,12 +53,13 @@ class StartCommand extends Command
 
         $bridge        = $input->getOption('bridge');
         $host          = $input->getOption('host');
+        $slaveHost     = $input->getOption('slave-host');
         $port          = (int) $input->getOption('port');
         $workers       = (int) $input->getOption('workers');
         $appenv        = $input->getOption('app-env');
         $appBootstrap  = $input->getOption('bootstrap');
 
-        $handler = new ProcessManager($port, $host, $workers);
+        $handler = new ProcessManager($port, $host, $workers, $slaveHost);
 
         $handler->setBridge($bridge);
         $handler->setAppEnv($appenv);
@@ -75,3 +78,4 @@ class StartCommand extends Command
         return $val;
     }
 }
+

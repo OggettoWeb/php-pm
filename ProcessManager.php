@@ -67,15 +67,21 @@ class ProcessManager
     protected $host = '127.0.0.1';
 
     /**
+     * @var string
+     */
+    protected $slaveHost = '127.0.0.1';
+
+    /**
      * @var int
      */
     protected $port = 8080;
 
-    function __construct($port = 8080, $host = '127.0.0.1', $slaveCount = 8)
+    function __construct($port = 8080, $host = '127.0.0.1', $slaveCount = 8, $slaveHost = '127.0.0.1')
     {
         $this->slaveCount = $slaveCount;
         $this->host = $host;
         $this->port = $port;
+        $this->slaveHost = $slaveHost;
     }
 
     public function fork()
@@ -314,7 +320,7 @@ class ProcessManager
         $pid = pcntl_fork();
         if (!$pid) {
             //we're in the slave now
-            new ProcessSlave($this->getBridge(), $this->appBootstrap, $this->appenv);
+            new ProcessSlave($this->getBridge(), $this->appBootstrap, $this->appenv, $this->slaveHost);
             exit;
         }
 
