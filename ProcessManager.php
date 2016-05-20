@@ -69,19 +69,35 @@ class ProcessManager
     /**
      * @var string
      */
-    protected $slaveHost = '127.0.0.1';
+    protected $slaveHost;
+
+    /**
+     * @var int
+     */
+    protected $slavePortOffset;
+
+    /**
+     * @var int
+     */
+    private $masterPort;
 
     /**
      * @var int
      */
     protected $port = 8080;
 
-    function __construct($port = 8080, $host = '127.0.0.1', $slaveCount = 8, $slaveHost = '127.0.0.1')
-    {
+    function __construct(
+        $port = 8080, $host = '127.0.0.1', $slaveCount = 8,
+        $slaveHost = '127.0.0.1', $slavePortOffset = 5501, $masterPort = 5500
+    ) {
         $this->slaveCount = $slaveCount;
         $this->host = $host;
         $this->port = $port;
         $this->slaveHost = $slaveHost;
+        $this->slavePortOffset = $slavePortOffset;
+        $this->masterPort = $masterPort;
+
+        $this->validateSlavePort();
     }
 
     public function fork()
@@ -149,11 +165,15 @@ class ProcessManager
         $this->loop = \React\EventLoop\Factory::create();
         $this->controller = new \React\Socket\Server($this->loop);
         $this->controller->on('connection', array($this, 'onSlaveConnection'));
-        $this->controller->listen(5500);
+        $this->controller->listen($this->masterPort);
+
+        echo sprintf('Master process running on %d', $this->masterPort) . PHP_EOL;
 
         $this->web = new \React\Socket\Server($this->loop);
         $this->web->on('connection', array($this, 'onWeb'));
         $this->web->listen($this->port, $this->host);
+
+        echo sprintf('LB running on %d', $this->port) . PHP_EOL;
 
         for ($i = 0; $i < $this->slaveCount; $i++) {
             $this->newInstance();
@@ -320,7 +340,10 @@ class ProcessManager
         $pid = pcntl_fork();
         if (!$pid) {
             //we're in the slave now
-            new ProcessSlave($this->getBridge(), $this->appBootstrap, $this->appenv, $this->slaveHost);
+            new ProcessSlave(
+                $this->getBridge(), $this->appBootstrap, $this->appenv, $this->slaveHost, $this->slavePortOffset,
+                $this->masterPort
+            );
             exit;
         }
 
@@ -330,5 +353,16 @@ class ProcessManager
             'port' => '...',
             'connection' => '...'
         );
+    }
+
+    private function validateSlavePort()
+    {
+        if ($this->slavePortOffset < 5501) {
+            throw new \InvalidArgumentException('Slave port offset must not be lower than 5501');
+        }
+
+        if ($this->slavePortOffset + $this->slaveCount >= 5600) {
+            throw new \InvalidArgumentException('Utmost slave port must be lower than 5600');
+        }
     }
 }

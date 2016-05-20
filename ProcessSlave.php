@@ -36,14 +36,22 @@ class ProcessSlave
     protected $slaveHost;
 
     /**
+     * @var int
+     */
+    protected $portOffset;
+
+    /**
      * @var string|null
      */
     protected $appenv;
 
-    public function __construct($bridgeName = null, $appBootstrap, $appenv, $host)
+    public function __construct($bridgeName = null, $appBootstrap, $appenv, $host, $portOffset, $masterPort)
     {
         $this->bridgeName = $bridgeName;
         $this->slaveHost = $host;
+        $this->portOffset = $portOffset;
+        $this->masterPort = $masterPort;
+
         $this->bootstrap($appBootstrap, $appenv);
         $this->connectToMaster();
         $this->setTimer();
@@ -85,7 +93,7 @@ class ProcessSlave
     public function connectToMaster()
     {
         $this->loop = \React\EventLoop\Factory::create();
-        $this->client = stream_socket_client('tcp://127.0.0.1:5500');
+        $this->client = stream_socket_client('tcp://127.0.0.1:' . $this->masterPort);
         $this->connection = new \React\Socket\Connection($this->client, $this->loop);
 
         $this->connection->on(
@@ -102,7 +110,7 @@ class ProcessSlave
         $http = new \React\Http\Server($socket);
         $http->on('request', array($this, 'onRequest'));
 
-        $port = 5501;
+        $port = $this->portOffset;
         while ($port < 5600) {
             try {
                 $socket->listen($port, $this->slaveHost);

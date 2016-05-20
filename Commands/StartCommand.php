@@ -23,21 +23,25 @@ class StartCommand extends Command
             $config = json_decode(file_get_contents($file), true);
         }
 
-        $bridge        = $this->defaultOrConfig($config, 'bridge', 'HttpKernel');
-        $host          = $this->defaultOrConfig($config, 'host', '127.0.0.1');
-        $slaveHost     = $this->defaultOrConfig($config, 'slave-host', '127.0.0.1');
-        $port          = (int) $this->defaultOrConfig($config, 'port', 8080);
-        $workers       = (int) $this->defaultOrConfig($config, 'workers', 8);
-        $appenv        = $this->defaultOrConfig($config, 'app-env', 'dev');
-        $appBootstrap  = $this->defaultOrConfig($config, 'bootstrap', 'PHPPM\Bootstraps\Symfony');
+        $bridge          = $this->defaultOrConfig($config, 'bridge', 'HttpKernel');
+        $host            = $this->defaultOrConfig($config, 'host', '127.0.0.1');
+        $slaveHost       = $this->defaultOrConfig($config, 'slave-host', '127.0.0.1');
+        $slavePortOffset = $this->defaultOrConfig($config, 'slave-port-offset', 5501);
+        $masterPort      = $this->defaultOrConfig($config, 'master-port', 5500);
+        $port            = (int) $this->defaultOrConfig($config, 'port', 8080);
+        $workers         = (int) $this->defaultOrConfig($config, 'workers', 8);
+        $appenv          = $this->defaultOrConfig($config, 'app-env', 'dev');
+        $appBootstrap    = $this->defaultOrConfig($config, 'bootstrap', 'PHPPM\Bootstraps\Symfony');
 
         $this
             ->setName('start')
             ->addArgument('working-directory', InputArgument::OPTIONAL, 'The root of your appplication.', './')
             ->addOption('bridge', null, InputOption::VALUE_OPTIONAL, 'The bridge we use to convert a ReactPHP-Request to your target framework.', $bridge)
-            ->addOption('host', null, InputOption::VALUE_OPTIONAL, 'Load-Balancer host. Default is 127.0.0.1', $host)
-            ->addOption('slave-host', null, InputOption::VALUE_OPTIONAL, 'Slave processes host. Default is 127.0.0.1', $slaveHost)
-            ->addOption('port', null, InputOption::VALUE_OPTIONAL, 'Load-Balancer port. Default is 8080', $port)
+            ->addOption('host', null, InputOption::VALUE_OPTIONAL, 'Load-Balancer host.', $host)
+            ->addOption('slave-host', null, InputOption::VALUE_OPTIONAL, 'Slave processes host.', $slaveHost)
+            ->addOption('slave-port-offset', null, InputOption::VALUE_OPTIONAL, 'Slave processes port offset.', $slavePortOffset)
+            ->addOption('master-port', null, InputOption::VALUE_OPTIONAL, 'Master process port.', $masterPort)
+            ->addOption('port', null, InputOption::VALUE_OPTIONAL, 'Load-Balancer port.', $port)
             ->addOption('workers', null, InputOption::VALUE_OPTIONAL, 'Worker count. Default is 8. Should be minimum equal to the number of CPU cores.', $workers)
             ->addOption('app-env', null, InputOption::VALUE_OPTIONAL, 'The environment that your application will use to bootstrap (if any)', $appenv)
             ->addOption('bootstrap', null, InputOption::VALUE_OPTIONAL, 'The class that will be used to bootstrap your application', $appBootstrap)
@@ -51,15 +55,17 @@ class StartCommand extends Command
             chdir($workingDir);
         }
 
-        $bridge        = $input->getOption('bridge');
-        $host          = $input->getOption('host');
-        $slaveHost     = $input->getOption('slave-host');
-        $port          = (int) $input->getOption('port');
-        $workers       = (int) $input->getOption('workers');
-        $appenv        = $input->getOption('app-env');
-        $appBootstrap  = $input->getOption('bootstrap');
+        $bridge          = $input->getOption('bridge');
+        $host            = $input->getOption('host');
+        $slaveHost       = $input->getOption('slave-host');
+        $slavePortOffset = $input->getOption('slave-port-offset');
+        $masterPort      = $input->getOption('master-port');
+        $port            = (int) $input->getOption('port');
+        $workers         = (int) $input->getOption('workers');
+        $appenv          = $input->getOption('app-env');
+        $appBootstrap    = $input->getOption('bootstrap');
 
-        $handler = new ProcessManager($port, $host, $workers, $slaveHost);
+        $handler = new ProcessManager($port, $host, $workers, $slaveHost, $slavePortOffset, $masterPort);
 
         $handler->setBridge($bridge);
         $handler->setAppEnv($appenv);

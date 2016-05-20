@@ -11,24 +11,28 @@ More information can be found in the article: [Bring High Performance Into Your 
 ```bash
 ./bin/ppm start --help
 Usage:
- start [--bridge="..."] [--port[="..."]] [--workers[="..."]] [--bootstrap[="..."]] [--app-env[="..."]] [working-directory]
+ start [--bridge[="..."]] [--host[="..."]] [--slave-host[="..."]] [--slave-port-offset[="..."]] [--master-port[="..."]] [--port[="..."]] [--workers[="..."]] [--app-env[="..."]] [--bootstrap[="..."]] [working-directory]
 
 Arguments:
- working-directory     The working directory.  (default: "./")
+ working-directory     The root of your appplication. (default: "./")
 
 Options:
- --bridge              The bridge we use to convert a ReactPHP-Request to your target framework.
- --port                Load-Balancer port. Default is 8080
- --workers             Worker count. Default is 8. Should be minimum equal to the number of CPU cores.
- --app-env             The that your application will use to bootstrap.
- --bootstrap           The class that will be used to bootstrap your application.
- --help (-h)           Display this help message.
- --quiet (-q)          Do not output any message.
+ --bridge              The bridge we use to convert a ReactPHP-Request to your target framework. (default: "HttpKernel")
+ --host                Load-Balancer host. (default: "127.0.0.1")
+ --slave-host          Slave processes host. (default: "127.0.0.1")
+ --slave-port-offset   Slave processes port offset. (default: 5501)
+ --master-port         Master process port. (default: 5500)
+ --port                Load-Balancer port. (default: 8080)
+ --workers             Worker count. Default is 8. Should be minimum equal to the number of CPU cores. (default: 8)
+ --app-env             The environment that your application will use to bootstrap (if any) (default: "dev")
+ --bootstrap           The class that will be used to bootstrap your application (default: "PHPPM\\Bootstraps\\Symfony")
+ --help (-h)           Display this help message
+ --quiet (-q)          Do not output any message
  --verbose (-v|vv|vvv) Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
- --version (-V)        Display this application version.
- --ansi                Force ANSI output.
- --no-ansi             Disable ANSI output.
- --no-interaction (-n) Do not ask any interactive question.
+ --version (-V)        Display this application version
+ --ansi                Force ANSI output
+ --no-ansi             Disable ANSI output
+ --no-interaction (-n) Do not ask any interactive question
 ```
 
 ### Example
@@ -37,7 +41,8 @@ Options:
 $ ./bin/ppm start ~/my/path/to/symfony/ --bridge=httpKernel
 ```
 
-Each worker starts its own HTTP Server which listens on port 5501, 5502, 5503 etc. Range is `5501 -> 5500+<workersCount>`.
+Each worker starts its own HTTP Server which listens on port 5501, 5502, 5503 etc. Default port range is `5501 -> 5500+<workersCount>`.
+Worker port offset could be changed with `--slave-port-offset` param.
 
 ### Setup 1. Use external Load-Balancer
 
