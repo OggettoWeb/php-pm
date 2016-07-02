@@ -246,8 +246,8 @@ class ProcessManager
                     foreach ($this->slaves as $idx => $slave) {
                         if ($slave['connection'] === $conn) {
                             unset($this->slaves[$idx]);
-                            $this->checkSlaves();
                             pcntl_waitpid($slave['pid'], $pidStatus);
+                            $this->checkSlaves();
                         }
                     }
                 },
